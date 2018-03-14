@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>RESTful Email Client</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" type="text/css" href="css/style.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+        <script>
+            
+        var currentFolder = 'inbox';
+        var attachmentContent = new FileReader();
+        
+        function moveFolder(emailID) {
+            var email = $("#login_form input[name=loginEmail]").val();
+            var password = $("#login_form input[name=password]").val();
+            var folder = $("#folders_list").val();
+            
+            var changedEmail = { folder : folder};
+            var dataToSend = JSON.stringify(changedEmail);
+            
+            $.ajax({
+                url: "/api/v1/emails/" + emailID,
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader ("Authorization", "Basic " + btoa(email + ":" + password));
+                },
+                complete: function(xhr) {
+                    switch (xhr.status) {
+                        case 400:
+                            console.log("Invalid folder");
+                            $("#move_status").html("Invalid folder");
+                            $("#move_status").css("color", "crimson");
+                            break;
+                        case 401:
+                            console.log("Login failed. Check user name and password");
+                            $("#move_status").html("Login failed. Check user name and password");
+                            $("#move_status").css("color", "crimson");
+                            break;
+                        case 403:
+                            console.log("Forbiden");
+                            $("#move_status").html("Forbiden");
+                            $("#move_status").css("color", "crimson");
+                        case 200:
+                                break;
+                        default:
+                            console.log("Server API error with code " + xhr.status);
+                            $("#move_status").html("Login failed. Check user name and password");
+                            $("#move_status").css("color", "crimson");
+                        }
+                    },
+                    type: "PUT",
+                    data: dataToSend,
+                    dataType: "json"
+                });
+                $("#" + currentFolder).click();
+        }        
+    
+        function selectItem(emailID) {
+            var email = $("#login_form input[name=loginEmail]").val();
+            var password = $("#login_form input[name=password]").val();
+
+            $.ajax({
+                url: "/api/v1/emails/" + emailID,
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader ("Authorization", "Basic " + btoa(email + ":" + password));
+                },
+                complete: function(xhr) {
+                    switch (xhr.status) {
+                        case 401:
+                            console.log("Login failed. Check user name and password");
+                            break;
+                        case 200:
+                                break;
+                        default:
+                            console.log("Server API error with code " + xhr.status);
+                        }
+                    },
+                    type: "GET",
+                    dataType: "json"
+                }).done(function (data) {
+                    // currentId = data.ID;
+                    $("#email_detail input[name=from]").val(data.from); 
+                    $("#email_detail input[name=subject]").val(data.subject);
+                    $("#body_detail").val(data.body);
+                    if (data.attachmentFileName) {
+                        output = '<button type="button" onclick="downloadAttachment(' + data.ID + ')">Download Attachment</button>';
+                        $("#download_attachment").html(output);
+                    } else {
+                        output = '<button type="button" disabled>Download Attachment</button>';
+                        $("#download_attachment").html(output);
+                    }
+                    output = 'Move to Folder:<select id="folders_list" onChange="moveFolder(' + data.ID + ')">';
+                    output += '<option disabled selected value>-- select --</option>';
+                    if (data.folder !== 'Inbox') {
+                        output += '<option value="inbox">Inbox</option>';
+                    }
+                    if (data.folder !== 'Important') {
+                        output += '<option value="important">Important</option>';
+                    }
+                    if (data.folder !== 'Social') {
+                        output += '<option value="social">Social</option>';
+                    }
+                    if (data.folder !== 'Spam') {
+                        output += '<option value="spam">Spam</option>';
+                    }
+                    output += '</select>';
+                    $("#move_folder").html(output);
+                });
+            }
+            
+            function downloadAttachment(ID) {
+                var email = $("#login_form input[name=loginEmail]").val();
+                var password = $("#login_form input[name=password]").val();
+                window.location = "/api/v1/emails/" + ID + "/attachment?email=" + email + "&password=" + password;          
+            }
+                
+            
+            $(document).ready(function () {
+                
+                $("#login").click(function() {
+                    var email = $("#login_form input[name=loginEmail]").val();
+                    var password = $("#login_form input[name=password]").val();
+
+                    $.ajax({
+                        url: "/api/v1/users/" + email,
+                        beforeSend: function (xhr) {
+                            xhr.setRequestHeader ("Authorization", "Basic " + btoa(email + ":" + password));
+                        },
+                        complete: function(xhr) {
+                            switch (xhr.status) {
+                                case 401:
+                                    console.log("Login failed. Check user name and password");
+                                    $("#login_status").show();
+                                    $("#login_status").html("Login failed. Check user name and password");
+                                    $("#login_status").css("color", "crimson");
+                                    break;
+                                case 200:
+                                        break;
+                                    default:
+                                        console.log("Server API error with code " + xhr.status);
+                                        $("#login_status").show();
+                                        $("#login_status").html("Server API error with code " + xhr.status);
+                                        $("#login_status").css("color", "crimson");
+                                }
+                            },
+                            type: "GET",
+                            dataType: "json"
+                        }).done(function (data) {
+                            console.log("Login succeeded");
+                            //$("#work_space").show();
+                            $("#login_status").css("color", "green");
+                            $("#login_form").hide();
+                            $("#login_status").html("Login succeeded");
+                            $(".folders").show();
+                            $(".session").show();
+                            $(".email_list").show();
+                            $("#email_detail").show();
+                            $("#inbox").click();
+                        });               
+                });
+                
+                $("#inbox, #important, #social, #outbox, #spam").click(function () {   
+                    var email = $("#login_form input[name=loginEmail]").val();
+                    var password = $("#login_form input[name=password]").val();
+                    $("#inbox, #important, #social, #outbox, #spam, #new_email").removeClass("menu_active");
+                    $(this).addClass("menu_active");
+                    currentFolder = $(this).attr("id");
+                    $.ajax({
+                        url: "/api/v1/emails/" + currentFolder,
+                        beforeSend: function (xhr) {
+                            xhr.setRequestHeader ("Authorization", "Basic " + btoa(email + ":" + password));
+                        },
+                        complete: function(xhr) {
+                            switch (xhr.status) {
+                                case 401:
+                                    console.log("Unauthorized");
+                                    break;
+                                case 200:
+                                    break;
+                                case 404:
+                                    console.log("Not found");
+                                    $(".email_list").html("Empty folder");
+                                    $(".email_list").show();
+                                    $("#email_detail").hide();
+                                default:
+                                    console.log("Server API error with code "+ xhr.status);
+                            }
+                        },
+                        type: "GET",
+                        dataType: "json"
+                        
+                    }).done(function (data) {
+                        if (data.length !== 0) {
+                            var output = "<table>\n";
+                            output += "<tr><th>From</th><th>Subject</th></tr>\n";
+                            for (var i = 0; i < data.length; i++) {
+                                var email = data[i];
+                                output += '<tr id="' + email.ID + '"onclick="selectItem(' + email.ID + ')">';
+                                output += "<td>" + email.from + "</td>";
+                                output += "<td>" + email.subject + "</td>";
+                                output += "</tr>";
+                            }
+                            output += "</table>\n";
+                            $(".email_list").html(output);
+                            $("tr:even").css("background-color", "gainsboro");
+                            $(".email_list").show();
+                            $("#email_detail").show();
+                            $('#' + data[0].ID).click();
+                        } else {
+                            $(".email_list").hide();
+                            $("#email_detail").hide();
+                        }
+                        $("#send_email").hide();
+                    });
+                });
+                               
+                $("#new_email").click(function () {
+                    $("#inbox, #important, #social, #outbox, #spam, #new_email").removeClass("menu_active");
+                    $(this).addClass("menu_active");
+                    $("#send_email").show();
+                    $("#email_detail").hide();
+                    $(".email_list").hide();
+                });
+                
+                $("#attach_file").change(function (event) {
+                   var attachmentFile =  event.target.files[0] || (event.dataTransfer && event.dataTransfer.files[0]);
+                   if (attachmentFile) {
+                        attachmentContent.readAsBinaryString(attachmentFile);
+                    };
+                });
+                    
+                $("#send").click(function () {
+
+                    var email = $("#login_form input[name=loginEmail]").val();
+                    var password = $("#login_form input[name=password]").val();
+
+                    var to = $("#send_email input[name=to]").val();                    
+                    var subject = $("#send_email input[name=subject]").val();    
+                    var body = $("#body").val();
+                    var attachment = "";
+                    var attachmentMimeType = "";
+                    var attachmentFileName = "";
+                    var fullPath = $("#attach_file").val();                 
+                    
+                    if (fullPath) {
+                        var form_data = new FormData(); 
+                        attachment = window.btoa(attachmentContent.result); //window.btoa($("#attach_file").prop('files')[0]);
+                        form_data.append('attachment:', attachment);
+                        attachmentMimeType = $("#attach_file").prop('files')[0].type;
+                        
+                        var startIndex = (fullPath.indexOf('\\') >= 0 ? fullPath.lastIndexOf('\\') : fullPath.lastIndexOf('/'));
+                        var filename = fullPath.substring(startIndex);
+                        if (filename.indexOf('\\') === 0 || filename.indexOf('/') === 0) {
+                            attachmentFileName = filename.substring(1);
+                        }
+                    }
+                   
+                    var newEmail = { to : to, subject : subject, 
+                        body : body, attachment: attachment, attachmentMimeType: attachmentMimeType, attachmentFileName: attachmentFileName};
+                    var dataToSend = JSON.stringify(newEmail);
+                    
+                    $.ajax({
+                        
+                        url: "/api/v1/emails",
+                        beforeSend: function (xhr) {
+                            xhr.setRequestHeader ("Authorization", "Basic " + btoa(email + ":" + password));
+                        },
+                        complete: function(xhr) {
+                            switch (xhr.status) {
+                                case 400:
+                                    var body = xhr.responseText;
+                                    $("#send_status").html(body);
+                                    $("#send_status ").css("color", "crimson");
+                                    break;
+                                case 401:
+                                    var body = xhr.responseText;
+                                    $("#send_status").html(body);
+                                    $("#send_status ").css("color", "crimson");
+                                    break;
+                                case 201:
+                                    break;
+                                default:
+                                    $("#send_status ").html("Server API error with code " + xhr.status);
+                                    $("#send_status ").css("color", "crimson");
+                            }
+                        },
+                        type: "POST",
+                        data: dataToSend
+                    }).done(function(data) {
+                        console.log("Email sent");
+                        $("#inbox").click();
+                        $("#login_form #status").html("Email sent to Outbox");
+                        $("#login_form #status").css("color", "green");
+                    });
+                });
+            });
+        </script>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header_area"> 
+                <div id="login_form">
+                    Login email: <input type="text" name="loginEmail">
+                    Password: <input type="password" name="password">
+                    <button id="login">Login</button>
+                </div>
+                <div id="login_status"></div>
+            </div>
+            <div class="folders">
+                <ul>
+                    <li id="new_email">New Email</li>
+                    <li id="inbox">Inbox</li>
+                    <li id="important">Important</li>
+                    <li id="social">Social</li>
+                    <li id="outbox">Outbox</li>
+                    <li id="spam">Spam</li>
+                </ul>
+            </div>
+            <div class="session">
+                <div class="email_list">
+                    <div id="result">
+                    </div>
+                </div>
+                <div id="email_detail">
+                    From: <input type="text" name="from" readonly><br>
+                    Subject: <input type="text" name="subject" readonly><br>
+                    <textarea id="body_detail" name="body" rows="10" cols="40" readonly></textarea><br>
+                    <div id="download_attachment">
+                    </div>
+                    <div id="move_folder">
+                    </div>
+                    <p id="move_status"></p>
+                </div>
+                <div id="send_email">
+                    To: <input class="new_email" type="text" name="to"><br>
+                    Subject: <input class="new_email" type="text" name="subject"><br>
+                    <textarea id="body" name="body" rows="10" cols="108"></textarea><br>
+                    <input type="file" name="attach_file" id="attach_file"><br>
+                    <button type="button" id="send">Send</button>
+                    <p id="send_status"></p>
+                </div>
+            </div>
+            <div class="clear">
+            </div>
+            <div class="footer">
+                <p>by Larissa Castellano</p>
+                <p>CCS2-508-771- WEB Application Development</p>
+            </div>
+        </div>
+    </body>
+</html>

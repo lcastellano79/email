@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>RESTful Email Client</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" type="text/css" href="css/style.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+        <script>
+            $(document).ready(function () {
+                $("#register").click(function () {
+
+                    var loginEmail = $("#register_form input[name=loginEmail]").val();                    
+                    var fullName = $("#register_form input[name=fullName]").val();    
+                    var password = $("#register_form input[name=password]").val();    
+                    var passwordReapeted = $("#register_form input[name=passwordReapeted]").val();
+                    
+                    var user = { loginEmail : loginEmail, fullName : fullName, 
+                        password : password, passwordReapeted : passwordReapeted };
+                    var dataToSend = JSON.stringify(user);
+                    
+                    $.ajax({
+                        
+                        url: "/api/v1/users",
+                        complete: function(xhr) {
+                            switch (xhr.status) {
+                                case 400:
+                                    var body = xhr.responseText;
+                                    $("#register_form #registration_status").html("Registration failed: " + body );
+                                    $("#register_form #registration_status").css("color", "crimson");
+                                    break;
+                                case 201:
+                                    break;
+                                default:
+                                    $("#register_form #registration_status").html("Server API error with code " + xhr.status);
+                                    $("#register_form #registration_status").css("color", "crimson");
+                            }
+                        },
+                        type: "POST",
+                        data: dataToSend
+                    }).done(function(data) {
+                        console.log("Registration succeeded");
+                        $("#register_form #registration_status").html("Registration succeeded");
+                        $("#register_form #registration_status").css("color", "green");
+                    });
+                });
+           
+            
+                $("#change_password").click(function () {
+                    var loginEmail = $("#change_password_form input[name=loginEmail]").val();                    
+                    var passwordOld = $("#change_password_form input[name=passwordOld]").val();    
+                    var passwordNew = $("#change_password_form input[name=passwordNew]").val();    
+                    var passwordNewReapeted = $("#change_password_form input[name=passwordNewReapeted]").val();
+                                        
+                    if (passwordNew !== passwordNewReapeted) {
+                        $("#change_password_form #passError").show();
+                        return;
+                    } else {
+                        $("#change_password_form #passError").hide();
+                    }
+                    var user = { loginEmail : loginEmail, passwordOld : passwordOld, passwordNew : passwordNew, passwordNewReapeted : passwordNewReapeted };
+                    var dataToSend = JSON.stringify(user);
+
+                    $.ajax({        
+                        url: "/api/v1/users/" + loginEmail,
+                        beforeSend: function (xhr) {
+                            xhr.setRequestHeader ("Authorization", "Basic " + btoa(loginEmail + ":" + passwordOld));
+                        },
+                        complete: function(xhr) {
+                            switch (xhr.status) {
+                                case 400:
+                                    var body = xhr.responseText;
+                                    $("#change_password_form #change_password_status").html("Registration failed: " + body );
+                                    $("#change_password_form #change_password_status").css("color", "crimson");
+                                    break;
+                                case 401:
+                                    var body = xhr.responseText;
+                                    $("#change_password_form #change_password_status").html("Registration failed: " + body );
+                                    $("#change_password_form #change_password_status").css("color", "crimson");
+                                case 200:
+                                    break;
+                                default:
+                                    $("#change_password_form #change_password_status").html("Server API error with code " + xhr.status);
+                                    $("#change_password_form #change_password_status").css("color", "crimson");
+                            }
+                        },
+                        type: "PUT",
+                        data: dataToSend
+                    }).done(function(data) {
+                        console.log("Password changed");
+                        $("#change_password_form #change_password_status").html("Password changed");
+                        $("#change_password_form #change_password_status").css("color", "green");
+                    });
+                });
+            });
+        </script>
+    </head>
+    <body>
+        <div class="container">
+            <div id="register_form">
+                <p>Register</p>
+                Login Email:<input type="text" name="loginEmail"><br>
+                Full Name: <input type="text" name="fullName"><br>
+                Password: <input type="password" name="password"><br>
+                Password: <input type="password" name="passwordReapeted"><br><br>
+                <button id="register">Register</button>
+                <p id="registration_status"></p>
+            </div>
+            <div id="change_password_form">
+                <p>Change Password</p>
+                Login Email: <input type="text" name="loginEmail"><br>
+                Password (old): <input type="password" name="passwordOld"><br>
+                Password (new): <input type="password" name="passwordNew"><br>
+                Password (new): <input type="password" name="passwordNewReapeted"><br>
+                <span id="passError">New passwords must match</span><br>
+                <button id="change_password">Change Password</button>
+                <p id="change_password_status"></p>
+            </div>
+            <div class="clear">
+            </div>
+            <div class="footer">
+                <p>by Larissa Castellano</p>
+            </div>
+        </div>
+    </body>
+</html>

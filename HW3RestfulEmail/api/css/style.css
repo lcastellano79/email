@@ -1,0 +1,160 @@
+.html {
+    background-color: gainsboro;
+}
+
+.container {
+    width: 80vw;
+    height: 95vh;
+    overflow-y: hidden;
+    margin: auto;
+    font-family: "Lucida", sans-serif;
+    font-size: 14px;
+    background-color: gainsboro;
+}
+
+.menu_active {
+    background-color: #FFF;
+    font-weight: bold;
+}
+
+#register_form {
+    float: left;
+    margin: 10px;
+    padding: 20px;
+    text-align: center;
+    width: 400px;
+    height: 200px;
+    background-color: #FFF;
+}
+
+#change_password_form {
+    float: left;
+    margin: 10px;
+    padding: 20px;
+    text-align: center;
+    width: 400px;
+    height: 200px;
+    background-color: #FFF;
+}
+
+#passError {
+    color: crimson;
+    display: none;
+}
+
+ul {
+    list-style: none;
+    text-align: right;
+}
+
+li {
+   padding: 5px 10px 5px 0px;
+}
+
+.folders {
+    margin-top: 28px;
+    font-size: 14px;
+    float:left;
+    display: none;
+    min-height: 87%;
+    max-height: 87%;
+    overflow: auto;
+    min-width: 14%;
+    max-width: 14%;
+}
+
+.session {
+    float: left;
+    overflow-y: scroll;
+    display: none;
+    min-width: 86%;
+    max-width: 86%;
+    min-height: 87%;
+    max-height: 87%;
+    background-color: #FFF;
+}
+
+.header_area{
+    width: 98%;
+    height: 7%;
+    position: relative;
+    top: 0;
+    margin: auto;
+    padding-left: 15px;
+    padding-top: 10px;
+    background-color: #FFF;
+    border: 1px solid gainsboro;
+}
+
+
+.email_list {
+    float: left;
+    width: 46%;
+    height: 100%;
+    display: none;
+    background-color: #FFF;
+    padding: 15px;
+}
+
+#email_detail {
+    float: right;
+    width: 46%;
+    height: 100%;
+    display: none;
+    background-color: #FFF;
+    padding: 15px;
+    border-left: gainsboro solid 0.5px;
+    font-size: 12px;
+}
+
+#send_email {
+    padding-left: 15px;
+    padding-top: 15px;
+    display: none;
+    width: 100%;
+    height: 270px;
+    font-size: 12px;
+    background-color: #FFF;
+}
+
+table {
+    text-align: left;
+    table-layout: fixed;
+    width: 100%;
+    padding: 10px;
+}
+
+th, td {
+   font-size: 12px;
+   width: 50px;
+}
+ 
+    
+input[type="text"] {
+    width: 240px;
+    padding: 5px;
+}
+
+input[type="password"] {
+    width: 240px;
+    padding: 5px;
+}
+
+.new_email {
+    min-width: 600px;
+}
+
+.clear {
+    clear: both;
+}
+
+.footer{
+    width: 100%;
+    height: 5%;
+    position: relative;
+    bottom: 0;  
+    padding-left: 15px;
+    background-color: gainsboro; 
+    font-size: 12px;
+    line-height: 30%;
+}
